@@ -11265,6 +11265,15 @@ static char *handle_index_repository(cbm_mcp_server_t *srv, const char *args) {
         return cbm_mcp_text_result(boundary_err, true);
     }
 
+    if (mode_str && strcmp(mode_str, "cross-repo-intelligence") == 0) {
+        char *result = handle_cross_repo_mode(srv, repo_path, name_override, args);
+        index_args_free(repo_path, mode_str, name_override);
+        return result;
+    }
+
+    /* #2134 applies to re-indexing only. Cross-repo mode reads an existing
+     * source index and never writes one; adopting a root owner there could
+     * turn one of its own named targets into the source. */
     if ((!name_override || !name_override[0]) && repo_path && repo_path[0]) {
         char *owner = NULL;
         char *owner_error = NULL;
@@ -11280,12 +11289,6 @@ static char *handle_index_repository(cbm_mcp_server_t *srv, const char *args) {
             safe_free(name_override);
             name_override = owner;
         }
-    }
-
-    if (mode_str && strcmp(mode_str, "cross-repo-intelligence") == 0) {
-        char *result = handle_cross_repo_mode(srv, repo_path, name_override, args);
-        index_args_free(repo_path, mode_str, name_override);
-        return result;
     }
 
     cbm_index_resource_policy_t resource_policy;
